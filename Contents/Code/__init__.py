@@ -18,12 +18,12 @@ debug_raw = True
 
 ####################################################################################################
 
-def Start():
-	Plugin.AddPrefixHandler(PLUGIN_PREFIX, MainMenu, APP_NAME, LOGO)
+#def Start():
+#	Plugin.AddPrefixHandler(PLUGIN_PREFIX, MainMenu, APP_NAME, LOGO)
 
 ####################################################################################################
 
-@handler('/video/dropbox', APP_NAME, art = R('logo.png'))
+@handler(PLUGIN_PREFIX, APP_NAME, art = R('logo.png'), thumb = LOGO)
 def MainMenu():
 	oc = ObjectContainer(no_cache = True, art = 'logo.png')
 
@@ -40,7 +40,7 @@ def MainMenu():
 		oc.title1 = None
 		oc.header = L('error')
                 oc.message = L('error_no_config')
-		oc.add(PrefsObject(title = L('preferences'), thumb = ICON_PREFERENCES))
+		oc.add(PrefsObject(title = L('preferences'), thumb = ICON_PREFERENCES)
 
 	return oc
 
@@ -115,6 +115,7 @@ def getDropboxMetadata(path, search = False, query = ''):
 ####################################################################################################
 
 def getDropboxLinkForFile(path):
+	if debug == True: Log("Fetching metadata from dropbox for item: " + path)
 	mode = Prefs['access_mode'].lower()
 	tmp = apiRequest("https://api.dropbox.com/1/media/" + mode + path)
 	if tmp != False:
@@ -218,6 +219,7 @@ def createVideoClipObject(item, url, container = False):
 	if container:
 		summary = summary + "Path: " + item['path'] + "\n"
 		summary = summary + "Modified: " +  item['modified'] + "\n"
+		
 
 	vco = VideoClipObject(
 		key = Callback(createVideoClipObject, item = item, url = url, container = True),
