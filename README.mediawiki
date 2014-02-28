@@ -1,0 +1,46 @@
+Dropbox for Plex is a browser channel which enables you to watch and hear your
+media directly from the cloud.
+
+Please keep in mind that this channel will '''not transcode''' any content. So you have to make sure
+that the content is viewable on your devices. If Plex will support any transcoding of streamed
+content in the future, this feature can be implemented afterwards.
+
+=== Your decision ===
+This channels supports the '''dropbox''' and '''sandbox''' mode from dropbox. The mode differs
+from what this channel can access in your dropbox. '''dropbox''' mode is the god mode which
+enables this channel to see all your files. If you'd like to jail this channel to a special
+folder, you have to use the '''sandbox''' mode. You have to come to a decision when you'll
+create an app within your '''own''' dropbox developer console.
+
+=== Prepare your Dropbox account ===
+To access the Dropbox api you have to supply special api keys. You'll get these keys by
+creating a Dropbox application. This can be done right here:
+https://www.dropbox.com/developers/apps
+
+At this point you can configure the rights of this app. This is a practical way:
+* Type of app: '''Dropbox API app'''
+* Type of data: '''Files and datastores'''
+* Limit to private folder: ''It's up to you''
+* Optionally you can limit the app to a special filetype. But there's no need to.
+
+=== Get an access token ===
+After creating the Dropbox app you can see your '''App key''' and '''App secret'''.
+With these informations you have to call a python script within the root directory
+of this Plex channel.
+ python getToken.py
+
+=== Channel configuration ===
+The getToken.py script gave you an access token which will be used within the
+Plex channel configuration. You also have to select which mode you selected
+when you've created your app: '''dropbox (public)''' or '''sandbox (private)''' mode.
+
+'''Please secure you access token. NOBODY may know it! This token allows full access
+to your configured dropbox space.'''
+
+=== Last words ===
+The current release of this channel allows you to watch videoclips. Browsing your
+pictures and audio files is on my roadmap.
+
+Have fun with this little goodie...
+
+Sascha Schmidt
