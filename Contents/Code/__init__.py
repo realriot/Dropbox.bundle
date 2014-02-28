@@ -40,7 +40,7 @@ def MainMenu():
 		oc.title1 = None
 		oc.header = L('error')
                 oc.message = L('error_no_config')
-		oc.add(PrefsObject(title = L('preferences'), thumb = ICON_PREFERENCES)
+		oc.add(PrefsObject(title = L('preferences'), thumb = ICON_PREFERENCES))
 
 	return oc
 
