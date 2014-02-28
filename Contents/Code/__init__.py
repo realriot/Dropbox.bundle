@@ -20,19 +20,17 @@ debug_raw = True
 
 def Start():
 	Plugin.AddPrefixHandler(PLUGIN_PREFIX, MainMenu, APP_NAME, LOGO)
-	Plugin.AddViewGroup("List", viewMode = "List", mediaType = "items")
-	Plugin.AddViewGroup("InfoList", viewMode = "InfoList", mediaType = "items")
 
 ####################################################################################################
 
 @handler('/video/dropbox', APP_NAME, art = R('logo.png'))
 def MainMenu():
-	oc = ObjectContainer(no_cache = True, view_group = 'List', art = 'logo.png')
+	oc = ObjectContainer(no_cache = True, art = 'logo.png')
 
 	if checkConfig():
 		if debug == True: Log('Configuration check: OK!')
 
-		oc = getDropboxStructure()
+		oc = getDropboxStructure('Dropbox')
 
 		# Add preferences.
 		oc.add(InputDirectoryObject(key=Callback(searchDropbox), title = 'Crawl your dropbox', prompt = 'Search for', thumb = ICON_SEARCH))
@@ -142,7 +140,7 @@ def createContentObjectList(metadata):
 			if debug == True: Log("Adding folder '" + item['path'])
 			foldernamearray = item['path'].split('/')
 			foldername = foldernamearray[len(foldernamearray)-1]
-			objlist.append(DirectoryObject(key=Callback(getDropboxStructure, path=item['path']), title=foldername, thumb=ICON_FOLDER))
+			objlist.append(DirectoryObject(key=Callback(getDropboxStructure, title=foldername,path=item['path']), title=foldername, thumb=ICON_FOLDER))
 		else:
 			if debug == True: Log("Evaluating item '" + item['path'])
 			obj = createMediaObject(item)
@@ -150,8 +148,8 @@ def createContentObjectList(metadata):
 				objlist.append(obj)
 	return objlist
 
-def getDropboxStructure(path = '/'):
-	oc = ObjectContainer(no_cache = True, view_group = 'List', art = R('logo.png'))
+def getDropboxStructure(title, path = '/'):
+	oc = ObjectContainer(no_cache = True, art = R('logo.png'), title2 = title)
 	if debug == True: Log("Called getDropboxStructure(" + path + ")")
 
 	metadata = getDropboxMetadata(path)
@@ -173,7 +171,7 @@ def getDropboxStructure(path = '/'):
 ####################################################################################################
 
 def searchDropbox(query):
-	oc = ObjectContainer(no_cache = True, view_group = 'List', art = R('logo.png'))
+	oc = ObjectContainer(no_cache = True, art = R('logo.png'))
         if debug == True: Log("Crawling dropbox for: " + query)
 
 	urlquery = {'query' : query }
