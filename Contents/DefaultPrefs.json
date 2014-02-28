@@ -1,0 +1,14 @@
+[
+	{	"id":		"access_mode",
+		"label":	"Access mode",
+		"type":		"enum",
+		"values":	["Dropbox", "Sandbox"],
+		"default":	"Dropbox"
+	},
+	{
+		"id":		"access_token",
+		"label":	"Access token",
+		"type":		"text",
+		"default":	""
+	}
+]

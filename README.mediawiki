@@ -1,4 +1,4 @@
-Dropbox for Plex is a browser channel which enables you to watch and hear your
+'''Dropbox for Plex''' is a browser channel which enables you to watch and hear your
 media directly from the cloud.
 
 Please keep in mind that this channel will '''not transcode''' any content. So you have to make sure
@@ -37,10 +37,10 @@ when you've created your app: '''dropbox (public)''' or '''sandbox (private)''' 
 '''Please secure you access token. NOBODY may know it! This token allows full access
 to your configured dropbox space.'''
 
-=== Last words ===
+=== My last words ===
 The current release of this channel allows you to watch videoclips. Browsing your
 pictures and audio files is on my roadmap.
 
 Have fun with this little goodie...
 
-Sascha Schmidt
+''Sascha Schmidt''

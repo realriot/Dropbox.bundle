@@ -1,0 +1,19 @@
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+        	<key>CFBundleIdentifier</key>
+        	<string>com.plexapp.plugins.dropbox</string>
+        	<key>PlexClientPlatformExclusions</key>
+        	<string></string>
+        	<key>PlexClientPlatforms</key>
+        	<string>*</string>
+        	<key>PlexFrameworkVersion</key>
+        	<string>2</string>
+		<!--
+			require elevated policy for HelperKit et. al
+		-->
+		<key>PlexPluginCodePolicy</key>
+		<string>Elevated</string>
+	</dict>
+
+</plist>

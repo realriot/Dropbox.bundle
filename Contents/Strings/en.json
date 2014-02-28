@@ -1,0 +1,10 @@
+{
+  "error": "Error",
+  "error_no_config": "Configuration error! Please check the channel settings.",
+  "error_webrequest_failed": "Talking to dropbox api failed.",
+  "info": "Information",
+  "info_no_content_found": "No content found.",
+  "text_search_result": "Search result",
+  "text_no_search_results_for": "No search results found for",
+  "preferences": "Settings"
+}
