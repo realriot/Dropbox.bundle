@@ -219,7 +219,6 @@ def createVideoClipObject(item, url, container = False):
 	if container:
 		summary = summary + "Path: " + item['path'] + "\n"
 		summary = summary + "Modified: " +  item['modified'] + "\n"
-		
 
 	vco = VideoClipObject(
 		key = Callback(createVideoClipObject, item = item, url = url, container = True),
@@ -240,6 +239,10 @@ def createVideoClipObject(item, url, container = False):
 		mo.container = Container.AVI
 	else:
 		mo.container = Container.MOV
+
+	# Define default codec information.
+	mo.video_codec = VideoCodec.H264
+	mo.audio_codec = AudioCodec.AAC
 
 	# Append mediaobject to clipobject.
 	vco.items.append(mo)
