@@ -18,11 +18,6 @@ debug_raw = True
 
 ####################################################################################################
 
-#def Start():
-#	Plugin.AddPrefixHandler(PLUGIN_PREFIX, MainMenu, APP_NAME, LOGO)
-
-####################################################################################################
-
 @handler(PLUGIN_PREFIX, APP_NAME, art = R('logo.png'), thumb = LOGO)
 def MainMenu():
 	oc = ObjectContainer(no_cache = True, art = 'logo.png')
@@ -78,9 +73,8 @@ def getFilenameFromPath(path):
 
 def apiRequest(call):
 	if debug == True: Log("apiRequest() - talking to dropbox api: " + call)
+        headers = { "Authorization" : "Bearer " + Prefs['access_token'] }
 
-        headers = { "Authorization" : "Bearer " + Prefs['access_token']
-        }
 	try:
 	        req = urllib2.Request(call, None, headers)
 	        response = urllib2.urlopen(req)
@@ -124,7 +118,25 @@ def getDropboxLinkForFile(path):
 			if debug_raw == True: Log("Got link data for: " + path)
 			if debug_raw == True: Log(json_data)
 		except Exception, e:
-			if debug == True: Log("ERROR! getDropboxMetadata(): " + str(e))
+			if debug == True: Log("ERROR! getDropboxLinkForFile(): " + str(e))
+			return False
+		return json_data
+	else:
+		return False
+
+####################################################################################################
+
+def getDropboxThumbnailForPicture(path):
+	if debug == True: Log("Fetching thumbnail from dropbox for item: " + path)
+	mode = Prefs['access_mode'].lower()
+	tmp = apiRequest("https://api-content.dropbox.com/1/thumbnails/" + mode + path)
+	if tmp != False:
+		try:
+			json_data = json.loads(tmp)
+			if debug_raw == True: Log("Got thumbnail data for: " + path)
+			if debug_raw == True: Log(json_data)
+		except Exception, e:
+			if debug == True: Log("ERROR! getDropboxThumbnail(): " + str(e))
 			return False
 		return json_data
 	else:
@@ -203,15 +215,12 @@ def createMediaObject(item):
 
 	# Handle movie files.
 	if fileext == '.mp4' or fileext == '.mkv' or fileext == '.avi' or fileext == '.mov':
-		urldata = getDropboxLinkForFile(item['path'])
-		if urldata == False:
-			return False
-		return createVideoClipObject(item, urldata['url'])
+		return createVideoClipObject(item)
 	return False
 
 ####################################################################################################
 
-def createVideoClipObject(item, url, container = False):
+def createVideoClipObject(item, container = False):
 	if debug == True: Log("Creating VideoClipObject for item: " + item['path'])
 	filename, fileext = getFilenameFromPath(item['path'])
 
@@ -221,14 +230,14 @@ def createVideoClipObject(item, url, container = False):
 		summary = summary + "Modified: " +  item['modified'] + "\n"
 
 	vco = VideoClipObject(
-		key = Callback(createVideoClipObject, item = item, url = url, container = True),
-		rating_key = url,
+		key = Callback(createVideoClipObject, item = item, container = True),
+		rating_key = item['path'],
 		title = filename + fileext,
 		summary = summary, 
 		thumb = ICON_PLAY,
 		items = []
 	)
-	mo = MediaObject(parts = [PartObject(key = url)])
+	mo = MediaObject(parts = [PartObject(key = Callback(PlayVideo, item = item))])
 
 	# Guess the video container type.
 	if fileext == ".mp4":
@@ -251,4 +260,8 @@ def createVideoClipObject(item, url, container = False):
 		return ObjectContainer(objects = [vco])
 	else:
 		return vco
-	return vco
+
+def PlayVideo(item):
+	urldata = getDropboxLinkForFile(item['path'])
+	if debug == True: Log("Playing VideoClipObject " + item['path'] + " temporary located at: " + urldata['url'] + " (expires: " + urldata['expires'] + ")")
+	return Redirect(urldata['url'])
