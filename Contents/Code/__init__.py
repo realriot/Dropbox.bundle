@@ -8,6 +8,7 @@ LOGO = 'logo.png'
 # Image resources.
 ICON_FOLDER = R('folder.png')
 ICON_PLAY = R('play.png')
+ICON_PHOTO = R('photo.png')
 ICON_SEARCH = R('search.png')
 ICON_PREFERENCES = R('preferences.png')
 
@@ -161,6 +162,8 @@ def createContentObjectList(metadata):
 				objlist.append(obj)
 	return objlist
 
+####################################################################################################
+
 def getDropboxStructure(title, path = '/'):
 	oc = ObjectContainer(no_cache = True, art = R('logo.png'), title2 = title)
 	if debug == True: Log("Called getDropboxStructure(" + path + ")")
@@ -212,10 +215,13 @@ def searchDropbox(query):
 def createMediaObject(item):
 	if debug == True: Log("Checking item: " + item['path'])
 	filename, fileext = getFilenameFromPath(item['path']) 
+	fileext = fileext.lower()
 
 	# Handle movie files.
 	if fileext == '.mp4' or fileext == '.mkv' or fileext == '.avi' or fileext == '.mov':
 		return createVideoClipObject(item)
+	if fileext == '.jpg' or fileext == '.png' or fileext == '.gif' or fileext == '.bmp' or fileext == '.tif':
+		return createPhotoObject(item)
 	return False
 
 ####################################################################################################
@@ -223,6 +229,7 @@ def createMediaObject(item):
 def createVideoClipObject(item, container = False):
 	if debug == True: Log("Creating VideoClipObject for item: " + item['path'])
 	filename, fileext = getFilenameFromPath(item['path'])
+	directurl = "https://api-content.dropbox.com/1/files/" + Prefs['access_mode'].lower() + item['path']
 
 	summary = "Size: " + item['size'] + "\n"
 	if container:
@@ -231,7 +238,7 @@ def createVideoClipObject(item, container = False):
 
 	vco = VideoClipObject(
 		key = Callback(createVideoClipObject, item = item, container = True),
-		rating_key = item['path'],
+		rating_key = directurl,
 		title = filename + fileext,
 		summary = summary, 
 		thumb = ICON_PLAY,
@@ -261,7 +268,31 @@ def createVideoClipObject(item, container = False):
 	else:
 		return vco
 
+####################################################################################################
+
+def createPhotoObject(item):
+	if debug == True: Log("Creating PhotoObject for item: " + item['path'])
+	filename, fileext = getFilenameFromPath(item['path'])
+	directurl = "https://api-content.dropbox.com/1/files/" + Prefs['access_mode'].lower() + item['path']
+
+	po = PhotoObject(
+		key = Callback(getPhotoObjectUrl, item = item),
+		rating_key = directurl, 
+		title = filename + fileext,
+		thumb = ICON_PHOTO
+	)
+	return po
+
+####################################################################################################
+
 def PlayVideo(item):
 	urldata = getDropboxLinkForFile(item['path'])
 	if debug == True: Log("Playing VideoClipObject " + item['path'] + " temporary located at: " + urldata['url'] + " (expires: " + urldata['expires'] + ")")
+	return Redirect(urldata['url'])
+
+####################################################################################################
+
+def getPhotoObjectUrl(item):
+	urldata = getDropboxLinkForFile(item['path'])
+	if debug == True: Log("Showing PhotoObject " + item['path'] + " temporary located at: " + urldata['url'] + " (expires: " + urldata['expires'] + ")")
 	return Redirect(urldata['url'])
