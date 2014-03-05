@@ -9,6 +9,7 @@ LOGO = 'logo.png'
 ICON_FOLDER = R('folder.png')
 ICON_PLAY = R('play.png')
 ICON_PHOTO = R('photo.png')
+ICON_TRACK = R('track.png')
 ICON_SEARCH = R('search.png')
 ICON_PREFERENCES = R('preferences.png')
 
@@ -146,6 +147,8 @@ def getDropboxThumbnailForPicture(path):
 ####################################################################################################
 
 def createContentObjectList(metadata):
+	dir_objlist = []
+	file_objlist = []
 	objlist = []
 	# Loop through the content.
 	for item in metadata:
@@ -154,12 +157,14 @@ def createContentObjectList(metadata):
 			if debug == True: Log("Adding folder '" + item['path'])
 			foldernamearray = item['path'].split('/')
 			foldername = foldernamearray[len(foldernamearray)-1]
-			objlist.append(DirectoryObject(key=Callback(getDropboxStructure, title=foldername,path=item['path']), title=foldername, thumb=ICON_FOLDER))
+			dir_objlist.append(DirectoryObject(key=Callback(getDropboxStructure, title=foldername,path=item['path']), title=foldername, thumb=ICON_FOLDER))
 		else:
 			if debug == True: Log("Evaluating item '" + item['path'])
 			obj = createMediaObject(item)
 			if obj != False:
-				objlist.append(obj)
+				file_objlist.append(obj)
+	objlist.extend(dir_objlist)
+	objlist.extend(file_objlist)
 	return objlist
 
 ####################################################################################################
@@ -222,6 +227,8 @@ def createMediaObject(item):
 		return createVideoClipObject(item)
 	if fileext == '.jpg' or fileext == '.png' or fileext == '.gif' or fileext == '.bmp' or fileext == '.tif':
 		return createPhotoObject(item)
+	if fileext == '.mp3' or fileext == '.wav' or fileext == '.aac' or fileext == '.m4a':
+		return createTrackObject(item)
 	return False
 
 ####################################################################################################
@@ -244,7 +251,7 @@ def createVideoClipObject(item, container = False):
 		thumb = ICON_PLAY,
 		items = []
 	)
-	mo = MediaObject(parts = [PartObject(key = Callback(PlayVideo, item = item))])
+	mo = MediaObject(parts = [PartObject(key = Callback(getUrlForPath, item = item))])
 
 	# Guess the video container type.
 	if fileext == ".mp4":
@@ -276,7 +283,7 @@ def createPhotoObject(item):
 	directurl = "https://api-content.dropbox.com/1/files/" + Prefs['access_mode'].lower() + item['path']
 
 	po = PhotoObject(
-		key = Callback(getPhotoObjectUrl, item = item),
+		key = Callback(getUrlForPath, item = item),
 		rating_key = directurl, 
 		title = filename + fileext,
 		thumb = ICON_PHOTO
@@ -285,14 +292,22 @@ def createPhotoObject(item):
 
 ####################################################################################################
 
-def PlayVideo(item):
-	urldata = getDropboxLinkForFile(item['path'])
-	if debug == True: Log("Playing VideoClipObject " + item['path'] + " temporary located at: " + urldata['url'] + " (expires: " + urldata['expires'] + ")")
-	return Redirect(urldata['url'])
+def createTrackObject(item):
+	if debug == True: Log("Creating TrackObject for item: " + item['path'])
+	filename, fileext = getFilenameFromPath(item['path'])
+	directurl = "https://api-content.dropbox.com/1/files/" + Prefs['access_mode'].lower() + item['path']
+
+	to = TrackObject(
+		key = Callback(getUrlForPath, item = item),
+		rating_key = directurl,
+		title = filename + fileext,
+		thumb = ICON_TRACK
+	)
+	return to
 
 ####################################################################################################
 
-def getPhotoObjectUrl(item):
+def getUrlForPath(item):
 	urldata = getDropboxLinkForFile(item['path'])
-	if debug == True: Log("Showing PhotoObject " + item['path'] + " temporary located at: " + urldata['url'] + " (expires: " + urldata['expires'] + ")")
+	if debug == True: Log("URL for object " + item['path'] + " : " + urldata['url'] + " (expires: " + urldata['expires'] + ")")
 	return Redirect(urldata['url'])
