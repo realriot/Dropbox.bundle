@@ -1,4 +1,4 @@
-import simplejson, urllib, urllib2, os
+import simplejson, urllib, urllib2, re, os, sys
 json = simplejson
 
 # Static text. 
@@ -17,6 +17,18 @@ ICON_PREFERENCES = R('preferences.png')
 PLUGIN_PREFIX = '/video/dropbox'
 debug = True
 debug_raw = True
+
+# Global variables.
+cacheDropboxThreadStatus = False
+cache = {}
+
+####################################################################################################
+
+def Start():
+        Plugin.AddPrefixHandler(PLUGIN_PREFIX, MainMenu, APP_NAME, LOGO)
+
+	if Prefs['access_token'] != "":
+		ValidatePrefs()
 
 ####################################################################################################
 
@@ -45,7 +57,9 @@ def MainMenu():
 
 def ValidatePrefs():
 	if debug == True: Log("Validating preferences")
+	global cacheDropboxThreadStatus
 	mode = Prefs['access_mode'].lower()
+
 	tmp = apiRequest("https://api.dropbox.com/1/metadata/" + mode + '/')
 	if tmp != False:
 		if debug == True: Log("Testcall to api finished with success. Preferences valid")
@@ -53,6 +67,14 @@ def ValidatePrefs():
 	else:
 		if debug == True: Log("Testcall to api failed. Preferences invalid")
 		Dict['PrefsValidated'] = False;
+
+	# Handle caching thread.
+	if Prefs['cache_use'] == True:
+		if cacheDropboxThreadStatus == False:
+			Thread.Create(cacheDropboxThread, globalize=True)
+	else:
+		if cacheDropboxThreadStatus == True:
+			cacheDropboxThreadStatus = False
 	return True
 
 ####################################################################################################
@@ -62,6 +84,75 @@ def checkConfig():
 		return True
 	else:
 		return False
+
+####################################################################################################
+
+def cacheDropboxThread():
+	if debug == True: Log("****** Starting cacheDropbox thread ***********")
+	global cacheDropboxThreadStatus
+	thread_sleep = int(Prefs['cache_update_interval'])*60
+
+	cacheDropboxThreadStatus = True
+
+	while Prefs['cache_use'] == True and cacheDropboxThreadStatus == True:
+		if debug == True: Log("cacheDropbox thread() loop...")
+
+		result = cacheDropboxStructure("/")
+
+		# Clear existing cache and move temporary records.
+		if result == True:
+			clearDropboxCache()
+			if debug == True: Log("Copying temporary records to live cache")
+			for key in cache:
+				if debug == True: Log("Copying cache for: " + key)
+				Dict[key] = cache[key] 
+
+		if debug == True: Log("****** cacheDropbox thread sleeping for " + str(thread_sleep) + " seconds ***********")
+		Thread.Sleep(float(thread_sleep))
+
+	clearCache()
+	if debug == True: Log("Exiting cacheDropbox thread....")
+	cacheDropboxThreadStatus = False
+
+####################################################################################################
+
+def clearDropboxCache():
+	if debug == True: Log("Clearing existing Dropbox structure cache")
+	delkeys = []
+	for key in Dict:
+		if re.match('\/', key):
+			delkeys.append(key)
+	for key in delkeys:
+		if debug == True: Log("Deleting cache key: " + key)
+		del Dict[key]
+
+####################################################################################################
+
+def cacheDropboxStructure(path = '/'):
+	if debug == True: Log("Called cacheDropboxStructure(" + path + ")")
+	global cache
+
+	# Cache existing Dropbox structure.
+	if debug == True: Log("Building cache from existing Dropbox structure")
+	# Init temporary cache.
+	if path == "/":
+		cache = {}
+
+	metadata = getDropboxMetadata(path)
+	if debug_raw == True: Log("Got metadata for folder: " + path)
+	if debug_raw == True: Log(metadata)
+	if metadata == False:
+		return False
+
+	if debug == True: Log("Creating cache key: " + path)
+	cache[path] = metadata
+	for item in metadata['contents']:
+		# Check wether it's a folder.
+		if item['is_dir'] == True:
+			result = cacheDropboxStructure(item['path'])
+			if result == False:
+				return False
+	return True
 
 ####################################################################################################
 
@@ -131,18 +222,13 @@ def getDropboxLinkForFile(path):
 def getDropboxThumbnailForPicture(path):
 	if debug == True: Log("Fetching thumbnail from dropbox for item: " + path)
 	mode = Prefs['access_mode'].lower()
-	tmp = apiRequest("https://api-content.dropbox.com/1/thumbnails/" + mode + path)
+	tmp = apiRequest("https://api-content.dropbox.com/1/thumbnails/" + mode + path + "?size=m")
+
+	tmp = False
 	if tmp != False:
-		try:
-			json_data = json.loads(tmp)
-			if debug_raw == True: Log("Got thumbnail data for: " + path)
-			if debug_raw == True: Log(json_data)
-		except Exception, e:
-			if debug == True: Log("ERROR! getDropboxThumbnail(): " + str(e))
-			return False
-		return json_data
+		return DataObject(tmp, 'image/jpeg')
 	else:
-		return False
+		return Redirect(ICON_PHOTO)
 
 ####################################################################################################
 
@@ -173,7 +259,15 @@ def getDropboxStructure(title, path = '/'):
 	oc = ObjectContainer(no_cache = True, art = R('logo.png'), title2 = title)
 	if debug == True: Log("Called getDropboxStructure(" + path + ")")
 
-	metadata = getDropboxMetadata(path)
+	# Check for existing configured and loaded cache.
+	metadata = {}
+	if Prefs['cache_use'] == True and path in cache:
+		if debug == True: Log("Using metadata from: cache") 
+		metadata = cache[path]
+	else:
+		if debug == True: Log("Using metadata from: Live Dropbox API")
+		metadata = getDropboxMetadata(path)
+
 	if metadata == False:
 		oc.title1 = None
 		oc.header = L('error')
@@ -225,7 +319,7 @@ def createMediaObject(item):
 	# Handle movie files.
 	if fileext == '.mp4' or fileext == '.mkv' or fileext == '.avi' or fileext == '.mov':
 		return createVideoClipObject(item)
-	if fileext == '.jpg' or fileext == '.png' or fileext == '.gif' or fileext == '.bmp' or fileext == '.tif':
+	if fileext == '.jpg' or fileext == '.jpeg' or fileext == '.png' or fileext == '.gif' or fileext == '.bmp' or fileext == '.tif' or fileext == '.tiff':
 		return createPhotoObject(item)
 	if fileext == '.mp3' or fileext == '.wav' or fileext == '.aac' or fileext == '.m4a':
 		return createTrackObject(item)
@@ -286,7 +380,7 @@ def createPhotoObject(item):
 		key = Callback(getUrlForPath, item = item),
 		rating_key = directurl, 
 		title = filename + fileext,
-		thumb = ICON_PHOTO
+		thumb = Callback(getDropboxThumbnailForPicture, path = item['path'])
 	)
 	return po
 
