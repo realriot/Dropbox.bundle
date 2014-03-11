@@ -219,17 +219,18 @@ def getDropboxLinkForFile(path):
 
 ####################################################################################################
 
-def getDropboxThumbnailForPicture(path):
+def getDropboxThumbnailForMedia(path, fallback):
 	if debug == True: Log("Fetching thumbnail from dropbox for item: " + path)
 	mode = Prefs['access_mode'].lower()
 	tmp = apiRequest("https://api-content.dropbox.com/1/thumbnails/" + mode + path + "?size=m")
+	if debug == True: Log("Got thumbnail url: " + "https://api-content.dropbox.com/1/thumbnails/" + mode + path + "?size=m")
 
 	if tmp != False:
 		if debug == True: Log("Got thumbnail data from dropbox api")
 		return DataObject(tmp, 'image/jpeg')
 	else:
 		if debug == True: Log("Could not fetch thumbnail data. Showing default image")
-		return Redirect(ICON_PHOTO)
+		return Redirect(fallback)
 
 ####################################################################################################
 
@@ -343,7 +344,7 @@ def createVideoClipObject(item, container = False):
 		rating_key = directurl,
 		title = filename + fileext,
 		summary = summary, 
-		thumb = ICON_PLAY,
+		thumb = Callback(getDropboxThumbnailForMedia, path = item['path'], fallback = ICON_PLAY),
 		items = []
 	)
 	mo = MediaObject(parts = [PartObject(key = Callback(getUrlForPath, item = item))])
@@ -381,7 +382,7 @@ def createPhotoObject(item):
 		key = Callback(getUrlForPath, item = item),
 		rating_key = directurl, 
 		title = filename + fileext,
-		thumb = Callback(getDropboxThumbnailForPicture, path = item['path'])
+		thumb = Callback(getDropboxThumbnailForMedia, path = item['path'], fallback = ICON_PHOTO)
 	)
 	return po
 
