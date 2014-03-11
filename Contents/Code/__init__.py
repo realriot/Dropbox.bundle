@@ -24,7 +24,6 @@ cache = {}
 ####################################################################################################
 
 def Start():
-        Plugin.AddPrefixHandler(PLUGIN_PREFIX, MainMenu, APP_NAME, LOGO)
 	ObjectContainer.art = R(ART_DEFAULT)
 
 	if Prefs['access_token'] != "":
