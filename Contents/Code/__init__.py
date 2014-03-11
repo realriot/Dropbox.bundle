@@ -3,15 +3,16 @@ json = simplejson
 
 # Static text. 
 APP_NAME = 'Dropbox'
-LOGO = 'logo.png'
+LOGO = 'icon-default.png'
 
 # Image resources.
-ICON_FOLDER = R('folder.png')
-ICON_PLAY = R('play.png')
-ICON_PHOTO = R('photo.png')
-ICON_TRACK = R('track.png')
-ICON_SEARCH = R('search.png')
-ICON_PREFERENCES = R('preferences.png')
+ART_DEFAULT = R('art-default.jpg')
+ICON_FOLDER = R('icon-folder.png')
+ICON_PLAY = R('icon-play.png')
+ICON_PHOTO = R('icon-photo.png')
+ICON_TRACK = R('icon-track.png')
+ICON_SEARCH = R('icon-search.png')
+ICON_PREFERENCES = R('icon-preferences.png')
 
 # Other definitions.
 PLUGIN_PREFIX = '/video/dropbox'
@@ -26,15 +27,16 @@ cache = {}
 
 def Start():
         Plugin.AddPrefixHandler(PLUGIN_PREFIX, MainMenu, APP_NAME, LOGO)
+	ObjectContainer.art = R(ART_DEFAULT)
 
 	if Prefs['access_token'] != "":
 		ValidatePrefs()
 
 ####################################################################################################
 
-@handler(PLUGIN_PREFIX, APP_NAME, art = R('logo.png'), thumb = LOGO)
+@handler(PLUGIN_PREFIX, APP_NAME, art = ART_DEFAULT, thumb = LOGO)
 def MainMenu():
-	oc = ObjectContainer(no_cache = True, art = 'logo.png')
+	oc = ObjectContainer(no_cache = True)
 
 	if checkConfig():
 		if debug == True: Log('Configuration check: OK!')
