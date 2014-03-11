@@ -224,10 +224,11 @@ def getDropboxThumbnailForPicture(path):
 	mode = Prefs['access_mode'].lower()
 	tmp = apiRequest("https://api-content.dropbox.com/1/thumbnails/" + mode + path + "?size=m")
 
-	tmp = False
 	if tmp != False:
+		if debug == True: Log("Got thumbnail data from dropbox api")
 		return DataObject(tmp, 'image/jpeg')
 	else:
+		if debug == True: Log("Could not fetch thumbnail data. Showing default image")
 		return Redirect(ICON_PHOTO)
 
 ####################################################################################################
