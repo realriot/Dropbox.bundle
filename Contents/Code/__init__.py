@@ -16,8 +16,6 @@ ICON_PREFERENCES = R('icon-preferences.png')
 
 # Other definitions.
 PLUGIN_PREFIX = '/video/dropbox'
-debug = True
-debug_raw = True
 
 # Global variables.
 cacheDropboxThreadStatus = False
@@ -39,7 +37,7 @@ def MainMenu():
 	oc = ObjectContainer(no_cache = True)
 
 	if checkConfig():
-		if debug == True: Log('Configuration check: OK!')
+		if Prefs['debug_log'] == True: Log('Configuration check: OK!')
 
 		oc = getDropboxStructure('Dropbox')
 
@@ -47,7 +45,7 @@ def MainMenu():
 		oc.add(InputDirectoryObject(key=Callback(searchDropbox), title = 'Crawl your dropbox', prompt = 'Search for', thumb = ICON_SEARCH))
 		oc.add(PrefsObject(title = L('preferences')))
 	else:
-		if debug == True: Log('Configuration check: FAILED!')
+		if Prefs['debug_log'] == True: Log('Configuration check: FAILED!')
 		oc.title1 = None
 		oc.header = L('error')
                 oc.message = L('error_no_config')
@@ -58,16 +56,16 @@ def MainMenu():
 ####################################################################################################
 
 def ValidatePrefs():
-	if debug == True: Log("Validating preferences")
+	if Prefs['debug_log'] == True: Log("Validating preferences")
 	global cacheDropboxThreadStatus
 	mode = Prefs['access_mode'].lower()
 
 	tmp = apiRequest("https://api.dropbox.com/1/metadata/" + mode + '/')
 	if tmp != False:
-		if debug == True: Log("Testcall to api finished with success. Preferences valid")
+		if Prefs['debug_log'] == True: Log("Testcall to api finished with success. Preferences valid")
 		Dict['PrefsValidated'] = True;
 	else:
-		if debug == True: Log("Testcall to api failed. Preferences invalid")
+		if Prefs['debug_log'] == True: Log("Testcall to api failed. Preferences invalid")
 		Dict['PrefsValidated'] = False;
 
 	# Handle caching thread.
@@ -90,63 +88,63 @@ def checkConfig():
 ####################################################################################################
 
 def cacheDropboxThread():
-	if debug == True: Log("****** Starting cacheDropbox thread ***********")
+	if Prefs['debug_log'] == True: Log("****** Starting cacheDropbox thread ***********")
 	global cacheDropboxThreadStatus
 	thread_sleep = int(Prefs['cache_update_interval'])*60
 
 	cacheDropboxThreadStatus = True
 
 	while Prefs['cache_use'] == True and cacheDropboxThreadStatus == True:
-		if debug == True: Log("cacheDropbox thread() loop...")
+		if Prefs['debug_log'] == True: Log("cacheDropbox thread() loop...")
 
 		result = cacheDropboxStructure("/")
 
 		# Clear existing cache and move temporary records.
 		if result == True:
 			clearDropboxCache()
-			if debug == True: Log("Copying temporary records to live cache")
+			if Prefs['debug_log'] == True: Log("Copying temporary records to live cache")
 			for key in cache:
-				if debug == True: Log("Copying cache for: " + key)
+				if Prefs['debug_log'] == True: Log("Copying cache for: " + key)
 				Dict[key] = cache[key] 
 
-		if debug == True: Log("****** cacheDropbox thread sleeping for " + str(thread_sleep) + " seconds ***********")
+		if Prefs['debug_log'] == True: Log("****** cacheDropbox thread sleeping for " + str(thread_sleep) + " seconds ***********")
 		Thread.Sleep(float(thread_sleep))
 
 	clearCache()
-	if debug == True: Log("Exiting cacheDropbox thread....")
+	if Prefs['debug_log'] == True: Log("Exiting cacheDropbox thread....")
 	cacheDropboxThreadStatus = False
 
 ####################################################################################################
 
 def clearDropboxCache():
-	if debug == True: Log("Clearing existing Dropbox structure cache")
+	if Prefs['debug_log'] == True: Log("Clearing existing Dropbox structure cache")
 	delkeys = []
 	for key in Dict:
 		if re.match('\/', key):
 			delkeys.append(key)
 	for key in delkeys:
-		if debug == True: Log("Deleting cache key: " + key)
+		if Prefs['debug_log'] == True: Log("Deleting cache key: " + key)
 		del Dict[key]
 
 ####################################################################################################
 
 def cacheDropboxStructure(path = '/'):
-	if debug == True: Log("Called cacheDropboxStructure(" + path + ")")
+	if Prefs['debug_log'] == True: Log("Called cacheDropboxStructure(" + path + ")")
 	global cache
 
 	# Cache existing Dropbox structure.
-	if debug == True: Log("Building cache from existing Dropbox structure")
+	if Prefs['debug_log'] == True: Log("Building cache from existing Dropbox structure")
 	# Init temporary cache.
 	if path == "/":
 		cache = {}
 
 	metadata = getDropboxMetadata(path)
-	if debug_raw == True: Log("Got metadata for folder: " + path)
-	if debug_raw == True: Log(metadata)
+	if Prefs['debug_log_raw'] == True: Log("Got metadata for folder: " + path)
+	if Prefs['debug_log_raw'] == True: Log(metadata)
 	if metadata == False:
 		return False
 
-	if debug == True: Log("Creating cache key: " + path)
+	if Prefs['debug_log'] == True: Log("Creating cache key: " + path)
 	cache[path] = metadata
 	for item in metadata['contents']:
 		# Check wether it's a folder.
@@ -167,7 +165,7 @@ def getFilenameFromPath(path):
 ####################################################################################################
 
 def apiRequest(call):
-	if debug == True: Log("apiRequest() - talking to dropbox api: " + call)
+	if Prefs['debug_log'] == True: Log("apiRequest() - talking to dropbox api: " + call)
         headers = { "Authorization" : "Bearer " + Prefs['access_token'] }
 
 	try:
@@ -175,7 +173,7 @@ def apiRequest(call):
 	        response = urllib2.urlopen(req)
 	        result = response.read()
 	except Exception, e:
-		if debug == True: Log("ERROR! apiRequest(): " + str(e))
+		if Prefs['debug_log'] == True: Log("ERROR! apiRequest(): " + str(e))
 		return False
         return result
 
@@ -188,14 +186,14 @@ def getDropboxMetadata(path, search = False, query = ''):
 		call = "https://api.dropbox.com/1/metadata/" + mode + path
 	else:
 		call = "https://api.dropbox.com/1/search/" + mode + path + "?" + query 
-	if debug == True: Log("getDropboxMetadata() url call: " + call)
+	if Prefs['debug_log'] == True: Log("getDropboxMetadata() url call: " + call)
 
 	tmp = apiRequest(call)
 	if tmp != False:
 		try:
 			json_data = json.loads(tmp)
 		except Exception, e:
-			if debug == True: Log("ERROR! getDropboxMetadata(): " + str(e))
+			if Prefs['debug_log'] == True: Log("ERROR! getDropboxMetadata(): " + str(e))
 			return False
 		return json_data
 	else:
@@ -204,16 +202,16 @@ def getDropboxMetadata(path, search = False, query = ''):
 ####################################################################################################
 
 def getDropboxLinkForFile(path):
-	if debug == True: Log("Fetching metadata from dropbox for item: " + path)
+	if Prefs['debug_log'] == True: Log("Fetching metadata from dropbox for item: " + path)
 	mode = Prefs['access_mode'].lower()
 	tmp = apiRequest("https://api.dropbox.com/1/media/" + mode + path)
 	if tmp != False:
 		try:
 			json_data = json.loads(tmp)
-			if debug_raw == True: Log("Got link data for: " + path)
-			if debug_raw == True: Log(json_data)
+			if Prefs['debug_log_raw'] == True: Log("Got link data for: " + path)
+			if Prefs['debug_log_raw'] == True: Log(json_data)
 		except Exception, e:
-			if debug == True: Log("ERROR! getDropboxLinkForFile(): " + str(e))
+			if Prefs['debug_log'] == True: Log("ERROR! getDropboxLinkForFile(): " + str(e))
 			return False
 		return json_data
 	else:
@@ -222,16 +220,16 @@ def getDropboxLinkForFile(path):
 ####################################################################################################
 
 def getDropboxThumbnailForMedia(path, fallback):
-	if debug == True: Log("Fetching thumbnail from dropbox for item: " + path)
+	if Prefs['debug_log'] == True: Log("Fetching thumbnail from dropbox for item: " + path)
 	mode = Prefs['access_mode'].lower()
 	tmp = apiRequest("https://api-content.dropbox.com/1/thumbnails/" + mode + path + "?size=m")
-	if debug == True: Log("Got thumbnail url: " + "https://api-content.dropbox.com/1/thumbnails/" + mode + path + "?size=m")
+	if Prefs['debug_log'] == True: Log("Got thumbnail url: " + "https://api-content.dropbox.com/1/thumbnails/" + mode + path + "?size=m")
 
 	if tmp != False:
-		if debug == True: Log("Got thumbnail data from dropbox api")
+		if Prefs['debug_log'] == True: Log("Got thumbnail data from dropbox api")
 		return DataObject(tmp, 'image/jpeg')
 	else:
-		if debug == True: Log("Could not fetch thumbnail data. Showing default image")
+		if Prefs['debug_log'] == True: Log("Could not fetch thumbnail data. Showing default image")
 		return Redirect(fallback)
 
 ####################################################################################################
@@ -244,12 +242,12 @@ def createContentObjectList(metadata):
 	for item in metadata:
 		# Check wether it's a folder or file.
 		if item['is_dir'] == True:
-			if debug == True: Log("Adding folder '" + item['path'])
+			if Prefs['debug_log'] == True: Log("Adding folder '" + item['path'])
 			foldernamearray = item['path'].split('/')
 			foldername = foldernamearray[len(foldernamearray)-1]
 			dir_objlist.append(DirectoryObject(key=Callback(getDropboxStructure, title=foldername,path=item['path']), title=foldername, thumb=ICON_FOLDER))
 		else:
-			if debug == True: Log("Evaluating item '" + item['path'])
+			if Prefs['debug_log'] == True: Log("Evaluating item '" + item['path'])
 			obj = createMediaObject(item)
 			if obj != False:
 				file_objlist.append(obj)
@@ -261,15 +259,15 @@ def createContentObjectList(metadata):
 
 def getDropboxStructure(title, path = '/'):
 	oc = ObjectContainer(no_cache = True, art = R('logo.png'), title2 = title)
-	if debug == True: Log("Called getDropboxStructure(" + path + ")")
+	if Prefs['debug_log'] == True: Log("Called getDropboxStructure(" + path + ")")
 
 	# Check for existing configured and loaded cache.
 	metadata = {}
 	if Prefs['cache_use'] == True and path in cache:
-		if debug == True: Log("Using metadata from: cache") 
+		if Prefs['debug_log'] == True: Log("Using metadata from: cache") 
 		metadata = cache[path]
 	else:
-		if debug == True: Log("Using metadata from: Live Dropbox API")
+		if Prefs['debug_log'] == True: Log("Using metadata from: Live Dropbox API")
 		metadata = getDropboxMetadata(path)
 
 	if metadata == False:
@@ -278,8 +276,8 @@ def getDropboxStructure(title, path = '/'):
 		oc.message = L('error_webrequest_failed')
 		return oc 
 
-	if debug_raw == True: Log("Got metadata for folder: " + path)
-	if debug_raw == True: Log(metadata)
+	if Prefs['debug_log_raw'] == True: Log("Got metadata for folder: " + path)
+	if Prefs['debug_log_raw'] == True: Log(metadata)
 
 	objlist = createContentObjectList(metadata['contents'])
 	for obj in objlist:
@@ -291,7 +289,7 @@ def getDropboxStructure(title, path = '/'):
 
 def searchDropbox(query):
 	oc = ObjectContainer(no_cache = True, art = R('logo.png'))
-        if debug == True: Log("Crawling dropbox for: " + query)
+        if Prefs['debug_log'] == True: Log("Crawling dropbox for: " + query)
 
 	urlquery = {'query' : query }
 	metadata = getDropboxMetadata('/', True, urllib.urlencode(urlquery))
@@ -301,8 +299,8 @@ def searchDropbox(query):
 		oc.message = L('error_webrequest_failed')
 		return oc
 
-	if debug_raw == True: Log("Got metadata for query: " + query)
-	if debug_raw == True: Log(metadata)
+	if Prefs['debug_log_raw'] == True: Log("Got metadata for query: " + query)
+	if Prefs['debug_log_raw'] == True: Log(metadata)
 
 	objlist = createContentObjectList(metadata)
 	for obj in objlist:
@@ -316,7 +314,7 @@ def searchDropbox(query):
 ####################################################################################################
 
 def createMediaObject(item):
-	if debug == True: Log("Checking item: " + item['path'])
+	if Prefs['debug_log'] == True: Log("Checking item: " + item['path'])
 	filename, fileext = getFilenameFromPath(item['path']) 
 	fileext = fileext.lower()
 
@@ -332,7 +330,7 @@ def createMediaObject(item):
 ####################################################################################################
 
 def createVideoClipObject(item, container = False):
-	if debug == True: Log("Creating VideoClipObject for item: " + item['path'])
+	if Prefs['debug_log'] == True: Log("Creating VideoClipObject for item: " + item['path'])
 	filename, fileext = getFilenameFromPath(item['path'])
 	directurl = "https://api-content.dropbox.com/1/files/" + Prefs['access_mode'].lower() + item['path']
 
@@ -376,7 +374,7 @@ def createVideoClipObject(item, container = False):
 ####################################################################################################
 
 def createPhotoObject(item):
-	if debug == True: Log("Creating PhotoObject for item: " + item['path'])
+	if Prefs['debug_log'] == True: Log("Creating PhotoObject for item: " + item['path'])
 	filename, fileext = getFilenameFromPath(item['path'])
 	directurl = "https://api-content.dropbox.com/1/files/" + Prefs['access_mode'].lower() + item['path']
 
@@ -391,7 +389,7 @@ def createPhotoObject(item):
 ####################################################################################################
 
 def createTrackObject(item):
-	if debug == True: Log("Creating TrackObject for item: " + item['path'])
+	if Prefs['debug_log'] == True: Log("Creating TrackObject for item: " + item['path'])
 	filename, fileext = getFilenameFromPath(item['path'])
 	directurl = "https://api-content.dropbox.com/1/files/" + Prefs['access_mode'].lower() + item['path']
 
@@ -407,5 +405,5 @@ def createTrackObject(item):
 
 def getUrlForPath(item):
 	urldata = getDropboxLinkForFile(item['path'])
-	if debug == True: Log("URL for object " + item['path'] + " : " + urldata['url'] + " (expires: " + urldata['expires'] + ")")
+	if Prefs['debug_log'] == True: Log("URL for object " + item['path'] + " : " + urldata['url'] + " (expires: " + urldata['expires'] + ")")
 	return Redirect(urldata['url'])

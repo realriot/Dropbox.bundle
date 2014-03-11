@@ -1,5 +1,6 @@
 [
-	{	"id":		"access_mode",
+	{
+		"id":		"access_mode",
 		"label":	"Access mode",
 		"type":		"enum",
 		"values":	["Dropbox", "Sandbox"],
@@ -11,15 +12,29 @@
 		"type":		"text",
 		"default":	""
 	},
-	{	"id":		"cache_use",
+	{
+		"id":		"cache_use",
 		"label":	"Cache Dropbox data",
 		"type":		"bool",
 		"default":	"false"
 	},
-	{	"id":		"cache_update_interval",
+	{
+		"id":		"cache_update_interval",
 		"label":	"Update interval (minutes)",
 		"type":		"enum",
 		"values":	["15", "30", "60", "90", "120", "180", "240", "300"],
 		"default":	"120"
+	},
+	{
+		"id":		"debug_log",
+		"label":	"Debug logging",
+		"type":		"bool",
+		"default":	"false"
+	},
+	{
+		"id":		"debug_log_raw",
+		"label":	"Debug logging (RAW)",
+		"type":		"bool",
+		"default":	"false"
 	}
 ]
