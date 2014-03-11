@@ -38,9 +38,6 @@ when you've created your app: '''dropbox (public)''' or '''sandbox (private)''' 
 to your configured dropbox space.'''
 
 === My last words ===
-The current release of this channel allows you to watch videoclips. Browsing your
-pictures and audio files is on my roadmap.
-
 Have fun with this little goodie...
 
 ''Sascha Schmidt''
