@@ -1,6 +1,5 @@
 #!/usr/bin/python
-import sys, simplejson, requests
-json = simplejson
+import sys, json, requests
 
 print ""
 print "**************************************************************"
