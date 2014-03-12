@@ -3,10 +3,10 @@ json = simplejson
 
 # Static text. 
 APP_NAME = 'Dropbox'
-LOGO = 'icon-default.png'
+ICON_DEFAULT = 'icon-default.png'
+ART_DEFAULT = 'art-default.jpg'
 
 # Image resources.
-ART_DEFAULT = R('art-default.jpg')
 ICON_FOLDER = R('icon-folder.png')
 ICON_PLAY = R('icon-play.png')
 ICON_PHOTO = R('icon-photo.png')
@@ -31,7 +31,7 @@ def Start():
 
 ####################################################################################################
 
-@handler(PLUGIN_PREFIX, APP_NAME, art = ART_DEFAULT, thumb = LOGO)
+@handler(PLUGIN_PREFIX, APP_NAME, ICON_DEFAULT, ART_DEFAULT)
 def MainMenu():
 	oc = ObjectContainer(no_cache = True)
 
