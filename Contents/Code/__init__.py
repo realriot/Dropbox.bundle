@@ -139,7 +139,7 @@ def clearTMDBCache():
 	if Prefs['debug_log'] == True: Log("Clearing existing TMDb cache")
 	delkeys = []
 	for key in Dict:
-		if re.match('\/', key):
+		if re.match('tmdb', key):
 			delkeys.append(key)
 	for key in delkeys:
 		if Prefs['debug_log'] == True: Log("Deleting cache key: " + key)
@@ -410,7 +410,7 @@ def createVideoObject(item, container = False):
 			vo.original_title = tmdbdata['original_title']
 			vo.year = datetime.datetime.strptime(tmdbdata['release_date'], '%Y-%m-%d').year
 			vo.originally_available_at = datetime.datetime.strptime(tmdbdata['release_date'], '%Y-%m-%d')
-			vo.genres = genres 
+			vo.genres = genres
 			vo.countries = countries
 			vo.thumb = "http://image.tmdb.org/t/p/w342" + tmdbdata['poster_path']
 			vo.art = "http://image.tmdb.org/t/p/w500" + tmdbdata['backdrop_path']
