@@ -12,6 +12,7 @@
 		"type":		"text",
 		"default":	""
 	},
+
 	{
 		"id":		"cache_use",
 		"label":	"Cache Dropbox data",
@@ -25,6 +26,27 @@
 		"values":	["15", "30", "60", "90", "120", "180", "240", "300"],
 		"default":	"120"
 	},
+
+	{
+		"id":           "tmdb_use",
+		"label":        "TMDb lookup",
+		"type":         "bool",
+		"default":      "false"
+	},
+	{
+		"id":           "tmdb_language",
+		"label":        "Language",
+		"type":         "enum",
+		"values":       ["en", "de", "fr", "es", "se"],
+		"default":      "en"
+	},
+	{
+		"id":           "tmdb_apikey",
+		"label":        "TMDb API-Key",
+		"type":         "text",
+		"default":      ""
+	},
+
 	{
 		"id":		"debug_log",
 		"label":	"Debug logging",

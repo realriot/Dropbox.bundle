@@ -1,4 +1,5 @@
-import simplejson, urllib, urllib2, re, os, sys
+import simplejson, urllib, urllib2, datetime, re, os, sys
+from mod_tmdb import *
 json = simplejson
 
 # Static text. 
@@ -74,6 +75,13 @@ def ValidatePrefs():
 	else:
 		if cacheDropboxThreadStatus == True:
 			cacheDropboxThreadStatus = False
+		else:
+			clearDropboxCache()
+
+	# Handle TMDb configuration.
+	if Prefs['tmdb_use'] == False:
+		clearTMDBCache()
+
 	return True
 
 ####################################################################################################
@@ -109,7 +117,7 @@ def cacheDropboxThread():
 		if Prefs['debug_log'] == True: Log("****** cacheDropbox thread sleeping for " + str(thread_sleep) + " seconds ***********")
 		Thread.Sleep(float(thread_sleep))
 
-	clearCache()
+	clearDropboxCache()
 	if Prefs['debug_log'] == True: Log("Exiting cacheDropbox thread....")
 	cacheDropboxThreadStatus = False
 
@@ -117,6 +125,18 @@ def cacheDropboxThread():
 
 def clearDropboxCache():
 	if Prefs['debug_log'] == True: Log("Clearing existing Dropbox structure cache")
+	delkeys = []
+	for key in Dict:
+		if re.match('\/', key):
+			delkeys.append(key)
+	for key in delkeys:
+		if Prefs['debug_log'] == True: Log("Deleting cache key: " + key)
+		del Dict[key]
+
+####################################################################################################
+
+def clearTMDBCache():
+	if Prefs['debug_log'] == True: Log("Clearing existing TMDb cache")
 	delkeys = []
 	for key in Dict:
 		if re.match('\/', key):
@@ -151,6 +171,16 @@ def cacheDropboxStructure(path = '/'):
 			result = cacheDropboxStructure(item['path'])
 			if result == False:
 				return False
+		else:
+			if Prefs['tmdb_use'] == True and Prefs['tmdb_apikey'] != "" and getMediaTypeForFile(item) == "video":
+				if "tmdb_" + item['path'] not in Dict:
+					if Prefs['debug_log'] == True: Log("No TMDb data in cache. Looking up: " + item['path'])
+					filename, fileext = getFilenameFromPath(item['path'])
+					tmdbdata = tmdbSearchMovie(Prefs['tmdb_apikey'], Prefs['tmdb_language'], filename.lower())
+					if tmdbdata != False:
+						Dict["tmdb_" + item['path']] = tmdbdata
+				else:
+					if Prefs['debug_log'] == True: Log("TMDb data already in cache for: " + item['path'])
 	return True
 
 ####################################################################################################
@@ -246,8 +276,17 @@ def createContentObjectList(metadata):
 			foldername = foldernamearray[len(foldernamearray)-1]
 			dir_objlist.append(DirectoryObject(key=Callback(getDropboxStructure, title=foldername,path=item['path']), title=foldername, thumb=ICON_FOLDER))
 		else:
-			if Prefs['debug_log'] == True: Log("Evaluating item '" + item['path'])
-			obj = createMediaObject(item)
+			if Prefs['debug_log'] == True: Log("Creating object for item '" + item['path'])
+
+			# Create video object.
+			if getMediaTypeForFile(item) == "video":
+				obj = createVideoObject(item)
+			# Create picture object.
+			if getMediaTypeForFile(item) == "picture":
+				obj = createPhotoObject(item)
+			# Create track (audio) object.
+			if getMediaTypeForFile(item) == "track":
+				obj = createTrackObject(item)
 			if obj != False:
 				file_objlist.append(obj)
 	objlist.extend(dir_objlist)
@@ -312,40 +351,78 @@ def searchDropbox(query):
 
 ####################################################################################################
 
-def createMediaObject(item):
-	if Prefs['debug_log'] == True: Log("Checking item: " + item['path'])
-	filename, fileext = getFilenameFromPath(item['path']) 
-	fileext = fileext.lower()
-
-	# Handle movie files.
-	if fileext == '.mp4' or fileext == '.mkv' or fileext == '.avi' or fileext == '.mov':
-		return createVideoClipObject(item)
-	if fileext == '.jpg' or fileext == '.jpeg' or fileext == '.png' or fileext == '.gif' or fileext == '.bmp' or fileext == '.tif' or fileext == '.tiff':
-		return createPhotoObject(item)
-	if fileext == '.mp3' or fileext == '.wav' or fileext == '.aac' or fileext == '.m4a':
-		return createTrackObject(item)
-	return False
-
-####################################################################################################
-
-def createVideoClipObject(item, container = False):
+def createVideoObject(item, container = False):
 	if Prefs['debug_log'] == True: Log("Creating VideoClipObject for item: " + item['path'])
 	filename, fileext = getFilenameFromPath(item['path'])
 	directurl = "https://api-content.dropbox.com/1/files/" + Prefs['access_mode'].lower() + item['path']
 
+	# Standard clip informations.
+	title = filename + fileext
 	summary = "Size: " + item['size'] + "\n"
 	if container:
 		summary = summary + "Path: " + item['path'] + "\n"
 		summary = summary + "Modified: " +  item['modified'] + "\n"
 
-	vco = VideoClipObject(
-		key = Callback(createVideoClipObject, item = item, container = True),
+	# Create standard VideoClipObject.
+	vo = VideoClipObject(
+		key = Callback(createVideoObject, item = item, container = True),
 		rating_key = directurl,
-		title = filename + fileext,
-		summary = summary, 
-		thumb = Callback(getDropboxThumbnailForMedia, path = item['path'], fallback = ICON_PLAY),
 		items = []
 	)
+
+	# Run tmdb lookup if configured.
+	tmdbdata = False
+	if Prefs['tmdb_use'] == True and Prefs['tmdb_apikey'] != "":
+		if "tmdb_" + item['path'] in Dict:
+			if Prefs['debug_log'] == True: Log("Found TMDb data in cache for: " + item['path'])
+			tmdbdata = Dict["tmdb_" + item['path']]
+		else:
+			if Prefs['debug_log'] == True: Log("Looking up TMDb data for: " + item['path'])
+			tmdbdata = tmdbSearchMovie(Prefs['tmdb_apikey'], Prefs['tmdb_language'], filename.lower())
+			if tmdbdata != False:
+				Dict["tmdb_" + item['path']] = tmdbdata
+
+		# Use TMDb data to enrich video clip metadata.
+		if tmdbdata != False:
+			if Prefs['debug_log_raw'] == True: Log("TMDb data: " + str(tmdbdata))
+
+			vo = MovieObject(
+				key = Callback(createVideoObject, item = item, container = True),
+				rating_key = directurl,
+				items = []
+			)
+
+			# Prepare genres.
+			genres = []
+			for genre in tmdbdata['genres']:
+				genres.append(genre['name'])
+
+			# Prepare production countries.
+			countries = []
+			for country in tmdbdata['production_countries']:
+				countries.append(country['name'])
+
+			vo.title = tmdbdata['title']
+			vo.summary = tmdbdata['overview']
+			vo.duration = int(tmdbdata['runtime'])*60000
+			vo.tagline = tmdbdata['tagline']
+			vo.rating = float(tmdbdata['vote_average'])
+			vo.original_title = tmdbdata['original_title']
+			vo.year = datetime.datetime.strptime(tmdbdata['release_date'], '%Y-%m-%d').year
+			vo.originally_available_at = datetime.datetime.strptime(tmdbdata['release_date'], '%Y-%m-%d')
+			vo.genres = genres 
+			vo.countries = countries
+			vo.thumb = "http://image.tmdb.org/t/p/w342" + tmdbdata['poster_path']
+			vo.art = "http://image.tmdb.org/t/p/w500" + tmdbdata['backdrop_path']
+			
+
+	# Add standard clip informations if there wasn't a successfull TMDb lookup.
+	if tmdbdata == False:
+		vo.title = title
+		vo.summary = summary
+		vo.thumb = Callback(getDropboxThumbnailForMedia, path = item['path'], fallback = ICON_PLAY)
+
+	# Add MediaObject and lookup url.
 	mo = MediaObject(parts = [PartObject(key = Callback(getUrlForPath, item = item))])
 
 	# Guess the video container type.
@@ -363,12 +440,12 @@ def createVideoClipObject(item, container = False):
 	mo.audio_codec = AudioCodec.AAC
 
 	# Append mediaobject to clipobject.
-	vco.items.append(mo)
+	vo.items.append(mo)
 
 	if container:
-		return ObjectContainer(objects = [vco])
+		return ObjectContainer(objects = [vo])
 	else:
-		return vco
+		return vo
 
 ####################################################################################################
 
@@ -406,3 +483,18 @@ def getUrlForPath(item):
 	urldata = getDropboxLinkForFile(item['path'])
 	if Prefs['debug_log'] == True: Log("URL for object " + item['path'] + " : " + urldata['url'] + " (expires: " + urldata['expires'] + ")")
 	return Redirect(urldata['url'])
+
+####################################################################################################
+
+def getMediaTypeForFile(item):
+	filename, fileext = getFilenameFromPath(item['path'])
+	fileext = fileext.lower()
+
+	# Handle movie files.
+	if fileext == '.mp4' or fileext == '.mkv' or fileext == '.avi' or fileext == '.mov':
+		return "video" 
+	if fileext == '.jpg' or fileext == '.jpeg' or fileext == '.png' or fileext == '.gif' or fileext == '.bmp' or fileext == '.tif' or fileext == '.tiff':
+		return "picture" 
+	if fileext == '.mp3' or fileext == '.wav' or fileext == '.aac' or fileext == '.m4a':
+		return "track" 
+	return False
