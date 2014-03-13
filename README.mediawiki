@@ -13,26 +13,11 @@ folder, you have to use the '''sandbox''' mode. You have to come to a decision w
 create an app within your '''own''' dropbox developer console.
 
 === Prepare your Dropbox account ===
-To access the Dropbox api you have to supply special api keys. You'll get these keys by
-creating a Dropbox application. This can be done right here:
-https://www.dropbox.com/developers/apps
+Select the access mode and get the access token for your Dropbox account at:
+[http://api.schmidt.ps/authDropboxChannel4Plex http://api.schmidt.ps/authDropboxChannel4Plex]
 
-At this point you can configure the rights of this app. This is a practical way:
-* Type of app: '''Dropbox API app'''
-* Type of data: '''Files and datastores'''
-* Limit to private folder: ''It's up to you''
-* Optionally you can limit the app to a special filetype. But there's no need to.
-
-=== Get an access token ===
-After creating the Dropbox app you can see your '''App key''' and '''App secret'''.
-With these informations you have to call a python script within the root directory
-of this Plex channel.
- python getToken.py
-
-=== Channel configuration ===
-The getToken.py script gave you an access token which will be used within the
-Plex channel configuration. You also have to select which mode you selected
-when you've created your app: '''dropbox (public)''' or '''sandbox (private)''' mode.
+After the validation an access token is displayed which you have to enter within the
+channel preferences.
 
 '''Please secure you access token. NOBODY may know it! This token allows full access
 to your configured dropbox space.'''
