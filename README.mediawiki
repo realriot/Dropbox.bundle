@@ -12,7 +12,7 @@ enables this channel to see all your files. If you'd like to jail this channel t
 folder, you have to use the '''sandbox''' mode. You have to come to a decision when you'll
 create an app within your '''own''' dropbox developer console.
 
-=== Prepare your Dropbox account ===
+=== Authorize access ===
 Select the access mode and get the access token for your Dropbox account at:
 [http://api.schmidt.ps/authDropboxChannel4Plex http://api.schmidt.ps/authDropboxChannel4Plex]
 
