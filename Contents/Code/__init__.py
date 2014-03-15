@@ -278,6 +278,7 @@ def createContentObjectList(metadata):
 		else:
 			if Prefs['debug_log'] == True: Log("Creating object for item '" + item['path'])
 
+			obj = False
 			# Create video object.
 			if getMediaTypeForFile(item) == "video":
 				obj = createVideoObject(item)
@@ -402,19 +403,42 @@ def createVideoObject(item, container = False):
 			for country in tmdbdata['production_countries']:
 				countries.append(country['name'])
 
-			vo.title = tmdbdata['title']
+			vo.title = "title" + tmdbdata['title']
 			vo.summary = tmdbdata['overview']
 			vo.duration = int(tmdbdata['runtime'])*60000
-			vo.tagline = tmdbdata['tagline']
+			vo.tagline = "tagline " + tmdbdata['tagline']
 			vo.rating = float(tmdbdata['vote_average'])
-			vo.original_title = tmdbdata['original_title']
+			vo.original_title = "Orig title " + tmdbdata['original_title']
 			vo.year = datetime.datetime.strptime(tmdbdata['release_date'], '%Y-%m-%d').year
 			vo.originally_available_at = datetime.datetime.strptime(tmdbdata['release_date'], '%Y-%m-%d')
 			vo.genres = genres
 			vo.countries = countries
 			vo.thumb = "http://image.tmdb.org/t/p/w342" + tmdbdata['poster_path']
 			vo.art = "http://image.tmdb.org/t/p/w500" + tmdbdata['backdrop_path']
-			
+
+			vo.tags.add("tag1")
+			vo.tags.add("tag2")
+
+			vo.source_title = "YouTube"
+
+			vo.studio = "My Studio"
+
+			vo.trivia = "Trivia Text"
+
+			vo.quotes = "Quotes text"
+
+			vo.content_rating = "Content rating"
+
+			vo.content_rating_age = 16
+
+			vo.writers.add("Writer1")
+			vo.writers.add("Writer2")
+
+			vo.directors.add("Director1")
+			vo.directors.add("Director2")
+
+			vo.producers.add("Producer1")
+			vo.producers.add("Producer2")
 
 	# Add standard clip informations if there wasn't a successfull TMDb lookup.
 	if tmdbdata == False:
