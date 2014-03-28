@@ -14,7 +14,7 @@ create an app within your '''own''' dropbox developer console.
 
 === Authorize access ===
 Select the access mode and get the access token for your Dropbox account at:
-[http://api.schmidt.ps/authDropboxChannel4Plex http://api.schmidt.ps/authDropboxChannel4Plex]
+[https://tools.schmidt.ps/authDropboxChannel4Plex https://tools.schmidt.ps/authDropboxChannel4Plex]
 
 After validation an access token is displayed which you have to enter within the
 channel preferences.
