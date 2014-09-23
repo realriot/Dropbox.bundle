@@ -22,11 +22,9 @@ folder, you have to use the '''sandbox''' mode. You have to come to a decision w
 create an app within your '''own''' dropbox developer console.
 
 === Authorize access ===
-Select the access mode and get the access token for your Dropbox account at:
-[https://tools.schmidt.ps/authDropboxChannel4Plex https://tools.schmidt.ps/authDropboxChannel4Plex]
-
-After validation an access token is displayed which you have to enter within the
-channel preferences.
+You can use the enclosed '''./getDropboxAccessToken.py''' script to fetch
+the token. But remember for this case that you have to add an Dropbox application within
+the [https://www.dropbox.com/developers Dropbox Developer home] by yourself, too.
 
 '''Please secure you access token. NOBODY may know it! This token allows full access
 to your configured dropbox space.'''
