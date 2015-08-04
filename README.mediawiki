@@ -22,9 +22,9 @@ folder, you have to use the '''sandbox''' mode. You have to come to a decision w
 create an app within your '''own''' dropbox developer console.
 
 === Authorize access ===
-You can use the enclosed '''./getDropboxAccessToken.py''' script to fetch
-the token. But remember for this case that you have to add an Dropbox application within
-the [https://www.dropbox.com/developers Dropbox Developer home] by yourself, too.
+You have to create an application within the [https://www.dropbox.com/developers/apps App Console] of Dropbox.
+Afterwards you can use the '''Generate access token''' button to create a token which has to be configured
+within the Plex channel. This allows the channel to access your Dropbox account with the given privileges.
 
 '''Please secure you access token. NOBODY may know it! This token allows full access
 to your configured dropbox space.'''
